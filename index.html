@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Listen and Build the Sentence</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(#4facfe, #00f2fe);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+            overscroll-behavior: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 900px;
+            width: 95%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+        }
+        .game-title {
+            font-size: clamp(2em, 6vw, 2.8em);
+            color: #1e90ff;
+            margin: 0 0 20px;
+            font-weight: bold;
+        }
+        .meaning {
+            font-size: clamp(1.1em, 4.5vw, 1.6em);
+            color: #1e90ff;
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            font-style: italic;
+        }
+        .sentence {
+            font-size: clamp(1em, 4vw, 1.4em);
+            margin: 20px 0;
+            min-height: 50px;
+            white-space: pre;
+            background: #f0f8ff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .word-bank {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .word {
+            background: #fff;
+            border: 2px solid #1e90ff;
+            border-radius: 8px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: clamp(0.9em, 3.5vw, 1.2em);
+            transition: all 0.3s ease;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .word:hover {
+            background: #1e90ff;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .word.disabled {
+            background: #e0e0e0;
+            border-color: #ccc;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        button {
+            background: #1e90ff;
+            color: #fff;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: clamp(0.9em, 3.5vw, 1.1em);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+        }
+        button:hover {
+            background: #1873cc;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .score {
+            font-size: clamp(1em, 4vw, 1.3em);
+            color: #333;
+            margin-top: 15px;
+        }
+        .message {
+            font-size: clamp(1em, 4vw, 1.3em);
+            color: #ff4444;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        .blink {
+            animation: blink 0.5s infinite alternate;
+        }
+        @keyframes blink {
+            0% { background: #fff; }
+            100% { background: #00ff00; }
+        }
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        .start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+                width: 100%;
+            }
+            .game-title { font-size: clamp(1.6em, 5vw, 2em); }
+            .meaning { font-size: clamp(0.9em, 4vw, 1.2em); }
+            .sentence { font-size: clamp(0.8em, 3.5vw, 1em); padding: 8px; }
+            .word { padding: 8px 15px; font-size: clamp(0.8em, 3vw, 1em); }
+            button { padding: 10px 20px; font-size: clamp(0.8em, 3vw, 1em); }
+            .score { font-size: clamp(0.8em, 3.5vw, 1em); }
+            .message { font-size: clamp(0.8em, 3.5vw, 1em); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="fireworks"></canvas>
+    <div class="container">
+        <div class="game-title">NGHE VÀ XẾP TỪ THÀNH CÂU</div>
+        <div class="start-screen" id="startScreen">
+            <button id="startBtn">Start Game</button>
+        </div>
+        <div class="game-screen" id="gameScreen" style="display: none;">
+            <div class="meaning" id="meaning"></div>
+            <div class="sentence" id="sentence"></div>
+            <div class="message" id="message"></div>
+            <div class="word-bank" id="wordBank"></div>
+            <div class="buttons">
+                <button id="listenAgainBtn" disabled>Listen Again</button>
+                <button id="resetBtn">Reset Game</button>
+            </div>
+            <div class="score" id="score">Score: 0 | Sentences Completed: 0/75</div>
+        </div>
+    </div>
+    <script>
+        const sentences = [
+            { en: "This is an alligator.", vi: "Đây là con cá sấu 🐊" },
+            { en: "This is an ant.", vi: "Đây là con kiến 🐜" },
+            { en: "This is an apple.", vi: "Đây là quả táo 🍎" },
+            { en: "This is a ball.", vi: "Đây là quả bóng ⚽" },
+            { en: "This is a banana.", vi: "Đây là quả chuối 🍌" },
+            { en: "This is a bear.", vi: "Đây là con gấu 🐻" },
+            { en: "This is a car.", vi: "Đây là chiếc ô tô 🚗" },
+            { en: "This is a cat.", vi: "Đây là con mèo 🐱" },
+            { en: "This is a cow.", vi: "Đây là con bò 🐄" },
+            { en: "This is a dog.", vi: "Đây là con chó 🐶" },
+            { en: "This is a drum.", vi: "Đây là cái trống 🥁" },
+            { en: "This is a duck.", vi: "Đây là con vịt 🦢" },
+            { en: "This is an ear.", vi: "Đây là cái tai 👂" },
+            { en: "This is an egg.", vi: "Đây là quả trứng 🥚" },
+            { en: "This is an elephant.", vi: "Đây là con voi 🐘" },
+            { en: "This is a fan.", vi: "Đây là cái quạt 🪭" },
+            { en: "This is a fish.", vi: "Đây là con cá 🐠" },
+            { en: "This is a frog.", vi: "Đây là con ếch 🐸" },
+            { en: "This is a gift.", vi: "Đây là món quà 🎁" },
+            { en: "This is a goat.", vi: "Đây là con dê 🐐" },
+            { en: "This is a bunch of grapes.", vi: "Đây là chùm nho 🍇" },
+            { en: "This is a hat.", vi: "Đây là cái mũ 🧢" },
+            { en: "This is a horse.", vi: "Đây là con ngựa 🐎" },
+            { en: "This is a house.", vi: "Đây là ngôi nhà 🏠" },
+            { en: "This is an ice cream.", vi: "Đây là cây kem 🍨" },
+            { en: "This is an igloo.", vi: "Đây là nhà tuyết 🏠❄️" },
+            { en: "This is an insect.", vi: "Đây là con côn trùng 🐞" },
+            { en: "This is a jar.", vi: "Đây là cái lọ 🫙" },
+            { en: "This is a jelly.", vi: "Đây là món thạch 🍮" },
+            { en: "This is a juice.", vi: "Đây là ly nước ép 🧃" },
+            { en: "This is a kangaroo.", vi: "Đây là con chuột túi 🦘" },
+            { en: "This is a key.", vi: "Đây là chìa khóa 🔑" },
+            { en: "This is a kite.", vi: "Đây là con diều 🪁" },
+            { en: "This is a lamp.", vi: "Đây là cái đèn 🪔" },
+            { en: "This is a leaf.", vi: "Đây là chiếc lá 🍃" },
+            { en: "This is a lion.", vi: "Đây là con sư tử 🦁" },
+            { en: "This is some milk.", vi: "Đây là ít sữa 🥛" },
+            { en: "This is the moon.", vi: "Đây là mặt trăng 🌙" },
+            { en: "This is a monkey.", vi: "Đây là con khỉ 🐒" },
+            { en: "This is a net.", vi: "Đây là cái lưới 🕸️" },
+            { en: "This is a nest.", vi: "Đây là cái tổ 🪺" },
+            { en: "This is a nose.", vi: "Đây là cái mũi 👃" },
+            { en: "This is an octopus.", vi: "Đây là con bạch tuộc 🐙" },
+            { en: "This is an orange.", vi: "Đây là quả cam 🍊" },
+            { en: "This is an owl.", vi: "Đây là con cú 🦉" },
+            { en: "This is a pen.", vi: "Đây là cây bút 🖋️" },
+            { en: "This is a pig.", vi: "Đây là con lợn 🐷" },
+            { en: "This is a pizza.", vi: "Đây là cái pizza 🍕" },
+            { en: "This is a quail.", vi: "Đây là con chim cút 🐦" },
+            { en: "This is a queen.", vi: "Đây là nữ hoàng 👑" },
+            { en: "This is a quilt.", vi: "Đây là cái chăn 🛏️" },
+            { en: "This is a rabbit.", vi: "Đây là con thỏ 🐰" },
+            { en: "This is the rain.", vi: "Đây là cơn mưa ☔" },
+            { en: "This is a robot.", vi: "Đây là con robot 🤖" },
+            { en: "This is a sock.", vi: "Đây là cái tất 🧦" },
+            { en: "This is a star.", vi: "Đây là ngôi sao ⭐" },
+            { en: "This is the sun.", vi: "Đây là mặt trời ☀️" },
+            { en: "This is a table.", vi: "Đây là cái bàn 🪑" },
+            { en: "This is a tiger.", vi: "Đây là con hổ 🐅" },
+            { en: "This is a turtle.", vi: "Đây là con rùa 🐢" },
+            { en: "This is an umbrella.", vi: "Đây là cái ô ☂️" },
+            { en: "This is a unicorn.", vi: "Đây là con kỳ lân 🦄" },
+            { en: "This is a uniform.", vi: "Đây là bộ đồng phục 👕" },
+            { en: "This is a van.", vi: "Đây là chiếc xe tải 🚐" },
+            { en: "This is a vest.", vi: "Đây là áo vest 🦺" },
+            { en: "This is a violin.", vi: "Đây là đàn violin 🎻" },
+            { en: "This is a watch.", vi: "Đây là đồng hồ ⌚" },
+            { en: "This is a whale.", vi: "Đây là con cá voi 🐳" },
+            { en: "This is a window.", vi: "Đây là cửa sổ 🪟" },
+            { en: "This is an x-ray.", vi: "Đây là tia X ☢️" },
+            { en: "This is a xylophone.", vi: "Đây là đàn xylophone 🎹" },
+            { en: "This is a yak.", vi: "Đây là con bò Tây Tạng 🦬" },
+            { en: "This is something yellow.", vi: "Đây là thứ màu vàng 💛" },
+            { en: "This is a yo-yo.", vi: "Đây là con yo-yo 🪀" },
+            { en: "This is a zebra.", vi: "Đây là con ngựa vằn 🦓" },
+            { en: "This is a zip.", vi: "Đây là khóa kéo 🤐" },
+            { en: "This is a zoo.", vi: "Đây là sở thú 🦒" }
+        ];
+
+        let currentSentence = null;
+        let currentWords = [];
+        let currentIndex = 0;
+        let score = 0;
+        let completedSentences = 0;
+        let usedSentences = [];
+        let isSpeaking = false;
+
+        const startScreen = document.getElementById('startScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const meaningEl = document.getElementById('meaning');
+        const sentenceEl = document.getElementById('sentence');
+        const wordBankEl = document.getElementById('wordBank');
+        const messageEl = document.getElementById('message');
+        const listenAgainBtn = document.getElementById('listenAgainBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const startBtn = document.getElementById('startBtn');
+        const scoreEl = document.getElementById('score');
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function speak(text, callback) {
+            if (isSpeaking) {
+                speechSynthesis.cancel();
+                isSpeaking = false;
+            }
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                utterance.volume = 1;
+                utterance.onend = () => {
+                    isSpeaking = false;
+                    if (callback) callback();
+                };
+                utterance.onerror = () => {
+                    isSpeaking = false;
+                    if (callback) callback();
+                };
+                isSpeaking = true;
+                speechSynthesis.speak(utterance);
+            }, 500);
+        }
+
+        function startNewSentence() {
+            if (usedSentences.length === sentences.length) {
+                showCongratulations();
+                return;
+            }
+            let availableSentences = sentences.filter(s => !usedSentences.includes(s.en));
+            currentSentence = availableSentences[Math.floor(Math.random() * availableSentences.length)];
+            usedSentences.push(currentSentence.en);
+            currentWords = currentSentence.en.split(' ').map(word => word.replace('.', ''));
+            currentIndex = 0;
+            messageEl.textContent = '';
+            meaningEl.innerHTML = currentSentence.vi;
+            sentenceEl.textContent = currentWords.map(() => '_').join(' ');
+            wordBankEl.innerHTML = '';
+            const shuffledWords = shuffle([...currentWords]);
+            shuffledWords.forEach(word => {
+                const wordEl = document.createElement('div');
+                wordEl.className = 'word';
+                wordEl.textContent = word;
+                wordEl.addEventListener('click', () => handleWordClick(word, wordEl));
+                wordBankEl.appendChild(wordEl);
+            });
+            listenAgainBtn.disabled = false;
+            speak(currentWords[0]);
+        }
+
+        function handleWordClick(word, wordEl) {
+            if (word === currentWords[currentIndex]) {
+                sentenceEl.textContent = currentWords.map((w, i) => i < currentIndex + 1 ? w : '_').join(' ');
+                wordEl.classList.add('disabled');
+                currentIndex++;
+                if (currentIndex === currentWords.length) {
+                    score += 10;
+                    completedSentences++;
+                    scoreEl.textContent = `Score: ${score} | Sentences Completed: ${completedSentences}/${sentences.length}`;
+                    readFullSentence();
+                } else {
+                    speak(currentWords[currentIndex]);
+                }
+            } else {
+                messageEl.textContent = 'Wrong! Try again.';
+                const correctWordEl = Array.from(wordBankEl.children).find(el => el.textContent === currentWords[currentIndex]);
+                correctWordEl.classList.add('blink');
+                setTimeout(() => correctWordEl.classList.remove('blink'), 2000);
+            }
+        }
+
+        function readFullSentence() {
+            let wordIndex = 0;
+            function readNextWord() {
+                if (wordIndex < currentWords.length) {
+                    sentenceEl.innerHTML = currentWords.map((w, i) => i === wordIndex ? `<span class="blink">${w}</span>` : (i < wordIndex ? w : '_')).join(' ');
+                    speak(currentWords[wordIndex], () => {
+                        wordIndex++;
+                        readNextWord();
+                    });
+                } else {
+                    sentenceEl.textContent = currentWords.join(' ') + '.';
+                    speak(currentSentence.en, startNewSentence);
+                }
+            }
+            readNextWord();
+        }
+
+        startBtn.addEventListener('click', () => {
+            startScreen.style.display = 'none';
+            gameScreen.style.display = 'block';
+            startNewSentence();
+        });
+
+        listenAgainBtn.addEventListener('click', () => {
+            if (currentIndex < currentWords.length) {
+                speak(currentWords[currentIndex]);
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            score = 0;
+            completedSentences = 0;
+            usedSentences = [];
+            scoreEl.textContent = `Score: ${score} | Sentences Completed: ${completedSentences}/${sentences.length}`;
+            startScreen.style.display = 'none';
+            gameScreen.style.display = 'block';
+            startNewSentence();
+        });
+
+        // Fireworks effect
+        const canvas = document.getElementById('fireworks');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particles = [];
+
+        function createParticle(x, y) {
+            return {
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8,
+                color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                size: Math.random() * 5 + 2,
+                life: 100
+            };
+        }
+
+        function showCongratulations() {
+            messageEl.textContent = 'Congratulations!';
+            particles = [];
+            for (let i = 0; i < 100; i++) {
+                particles.push(createParticle(canvas.width / 2, canvas.height / 2));
+            }
+            animateFireworks();
+        }
+
+        function animateFireworks() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.05;
+                p.life--;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            });
+            if (particles.length > 0) {
+                requestAnimationFrame(animateFireworks);
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
